@@ -322,7 +322,10 @@ package riscv;
         CSR_FRM            = 12'h002,
         CSR_FCSR           = 12'h003,
         CSR_FTRAN          = 12'h800,
-        CSR_LCT            = 12'h801,
+        // Approximation CSRs
+        CSR_APPROX_A       = 12'h801,
+        CSR_APPROX_B       = 12'h802,
+        CSR_APPROX_C       = 12'h803,
         // Supervisor Mode CSRs
         CSR_SSTATUS        = 12'h100,
         CSR_SIE            = 12'h104,

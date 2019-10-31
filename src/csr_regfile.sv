@@ -74,7 +74,7 @@ module csr_regfile #(
     output logic                  tw_o,                       // timeout wait
     output logic                  tsr_o,                      // trap sret
     output logic                  debug_mode_o,               // we are in debug mode -> that will change some decoding
-    output logic                  single_step_o,              // we are in single-step mode
+    output logic                  single_step_o,              // we are in single-step mode    
     // Caches
     output logic                  icache_en_o,                // L1 ICache Enable
     output logic                  dcache_en_o,                // L1 DCache Enable
@@ -134,7 +134,9 @@ module csr_regfile #(
     logic [63:0] instret_q,   instret_d;
 
     riscv::fcsr_t fcsr_q, fcsr_d;
-    logic [63:0] lct_value_q, lct_value_d;
+    logic [63:0] approx_a_q, approx_a_d;
+    logic [63:0] approx_b_q, approx_b_d;
+    logic [63:0] approx_c_q, approx_c_d;
     // ----------------
     // Assignments
     // ----------------
@@ -180,8 +182,14 @@ module csr_regfile #(
                         csr_rdata = {57'b0, fcsr_q.fprec};
                     end
                 end
-                riscv::CSR_LCT: begin
-                    csr_rdata = lct_value_q;
+                riscv::CSR_APPROX_A: begin
+                    csr_rdata = approx_a_q;
+                end
+                riscv::CSR_APPROX_B: begin
+                    csr_rdata = approx_b_q;
+                end
+                riscv::CSR_APPROX_C: begin
+                    csr_rdata = approx_c_q;
                 end
                 // debug registers
                 riscv::CSR_DCSR:               csr_rdata = {32'b0, dcsr_q};
@@ -307,7 +315,9 @@ module csr_regfile #(
         perf_data_o             = 'b0;
 
         fcsr_d                  = fcsr_q;
-        lct_value_d             = lct_value_q;
+        approx_a_d              = approx_a_q;
+        approx_b_d              = approx_b_q;
+        approx_c_d              = approx_c_q;
         priv_lvl_d              = priv_lvl_q;
         debug_mode_d            = debug_mode_q;
         dcsr_d                  = dcsr_q;
@@ -393,8 +403,14 @@ module csr_regfile #(
                         flush_o = 1'b1;
                     end
                 end
-                riscv::CSR_LCT: begin
-                    lct_value_d = csr_wdata;
+                riscv::CSR_APPROX_A: begin
+                    approx_a_d = csr_wdata;
+                end
+                riscv::CSR_APPROX_B: begin
+                    approx_b_d = csr_wdata;
+                end
+                riscv::CSR_APPROX_C: begin
+                    approx_c_d = csr_wdata;
                 end
                 // debug CSR
                 riscv::CSR_DCSR: begin
@@ -980,8 +996,10 @@ module csr_regfile #(
             priv_lvl_q             <= riscv::PRIV_LVL_M;
             // floating-point registers
             fcsr_q                 <= 64'b0;
-            // LCT registers
-            lct_value_q            <= 64'b0;
+            // Approximation registers
+            approx_a_q             <= 64'b0;
+            approx_b_q             <= 64'b0;
+            approx_c_q             <= 64'b0;
             // debug signals
             debug_mode_q           <= 1'b0;
             dcsr_q                 <= '0;
@@ -1022,8 +1040,10 @@ module csr_regfile #(
             priv_lvl_q             <= priv_lvl_d;
             // floating-point registers
             fcsr_q                 <= fcsr_d;
-            // LCT registers
-            lct_value_q            <= lct_value_d;
+            // Approximation registers
+            approx_a_q            <= approx_a_d;
+            approx_b_q            <= approx_b_d;
+            approx_c_q            <= approx_c_d;
             // debug signals
             debug_mode_q           <= debug_mode_d;
             dcsr_q                 <= dcsr_d;
