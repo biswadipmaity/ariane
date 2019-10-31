@@ -134,6 +134,7 @@ module csr_regfile #(
     logic [63:0] instret_q,   instret_d;
 
     riscv::fcsr_t fcsr_q, fcsr_d;
+    logic [63:0] lct_value_q, lct_value_d;
     // ----------------
     // Assignments
     // ----------------
@@ -178,6 +179,9 @@ module csr_regfile #(
                     end else begin
                         csr_rdata = {57'b0, fcsr_q.fprec};
                     end
+                end
+                riscv::CSR_LCT: begin
+                    csr_rdata = lct_value_q;
                 end
                 // debug registers
                 riscv::CSR_DCSR:               csr_rdata = {32'b0, dcsr_q};
@@ -303,7 +307,7 @@ module csr_regfile #(
         perf_data_o             = 'b0;
 
         fcsr_d                  = fcsr_q;
-
+        lct_value_d             = lct_value_q;
         priv_lvl_d              = priv_lvl_q;
         debug_mode_d            = debug_mode_q;
         dcsr_d                  = dcsr_q;
@@ -388,6 +392,9 @@ module csr_regfile #(
                         // this instruction has side-effects
                         flush_o = 1'b1;
                     end
+                end
+                riscv::CSR_LCT: begin
+                    lct_value_d = csr_wdata;
                 end
                 // debug CSR
                 riscv::CSR_DCSR: begin
@@ -973,6 +980,8 @@ module csr_regfile #(
             priv_lvl_q             <= riscv::PRIV_LVL_M;
             // floating-point registers
             fcsr_q                 <= 64'b0;
+            // LCT registers
+            lct_value_q            <= 64'b0;
             // debug signals
             debug_mode_q           <= 1'b0;
             dcsr_q                 <= '0;
@@ -1013,6 +1022,8 @@ module csr_regfile #(
             priv_lvl_q             <= priv_lvl_d;
             // floating-point registers
             fcsr_q                 <= fcsr_d;
+            // LCT registers
+            lct_value_q            <= lct_value_d;
             // debug signals
             debug_mode_q           <= debug_mode_d;
             dcsr_q                 <= dcsr_d;
