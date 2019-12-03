@@ -133,6 +133,8 @@ module store_buffer (
     assign req_port_o.address_tag   = commit_queue_q[commit_read_pointer_q].address[ariane_pkg::DCACHE_TAG_WIDTH     +
                                                                                     ariane_pkg::DCACHE_INDEX_WIDTH-1 :
                                                                                     ariane_pkg::DCACHE_INDEX_WIDTH];
+    // we are never going to approximate this request
+    assign req_port_o.approx      = 1'b0;
     assign req_port_o.data_wdata    = commit_queue_q[commit_read_pointer_q].data;
     assign req_port_o.data_be       = commit_queue_q[commit_read_pointer_q].be;
     assign req_port_o.data_size     = commit_queue_q[commit_read_pointer_q].data_size;

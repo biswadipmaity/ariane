@@ -55,6 +55,12 @@ module load_store_unit #(
     input  logic [43:0]              satp_ppn_i,               // From CSR register file
     input  logic [ASID_WIDTH-1:0]    asid_i,                   // From CSR register file
     input  logic                     flush_tlb_i,
+
+    // CSR Registers
+    input  logic [63:0]              csr_approx_a_i,           // From CSR register file
+    input  logic [63:0]              csr_approx_b_i,           // From CSR register file
+    input  logic [63:0]              csr_approx_c_i,           // From CSR register file
+
     // Performance counters
     output logic                     itlb_miss_o,
     output logic                     dtlb_miss_o,
@@ -201,6 +207,9 @@ module load_store_unit #(
         // to memory arbiter
         .req_port_i            ( dcache_req_ports_i [1] ),
         .req_port_o            ( dcache_req_ports_o [1] ),
+        .csr_approx_a_i        ( csr_approx_a_i         ),
+        .csr_approx_b_i        ( csr_approx_b_i         ),
+        .csr_approx_c_i        ( csr_approx_c_i         ),
         .*
     );
 

@@ -81,6 +81,7 @@ module wt_dcache_wbuffer #(
   output logic [DCACHE_OFFSET_WIDTH-1:0]     rd_off_o,
   output logic                               rd_req_o,        // read the word at offset off_i[:3] in all ways
   output logic                               rd_tag_only_o,   // set to 1 here as we do not have to read the data arrays
+  output logic                               approx_o,
   input  logic                               rd_ack_i,
   input logic  [63:0]                        rd_data_i,       // unused
   input logic  [DCACHE_SET_ASSOC-1:0]        rd_vld_bits_i,   // unused
@@ -276,6 +277,7 @@ module wt_dcache_wbuffer #(
   assign rd_tag_o   = rd_tag_q;//delay by one cycle
   assign rd_idx_o   = rd_paddr[DCACHE_INDEX_WIDTH-1:DCACHE_OFFSET_WIDTH];
   assign rd_off_o   = rd_paddr[DCACHE_OFFSET_WIDTH-1:0];
+  assign approx_o   = req_port_i.approx;
   assign check_en_d = rd_req_o & rd_ack_i;
 
   // cache update port

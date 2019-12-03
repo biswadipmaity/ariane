@@ -34,6 +34,9 @@ module load_unit (
     input  logic [63:0]              paddr_i,             // physical address in
     input  exception_t               ex_i,                // exception which may has happened earlier. for example: mis-aligned exception
     input  logic                     dtlb_hit_i,          // hit on the dtlb, send in the same cycle as the request
+    input  logic [63:0]              csr_approx_a_i,           // From CSR register file
+    input  logic [63:0]              csr_approx_b_i,           // From CSR register file
+    input  logic [63:0]              csr_approx_c_i,           // From CSR register file
     // address checker
     output logic [11:0]              page_offset_o,
     input  logic                     page_offset_matches_i,
@@ -68,6 +71,13 @@ module load_unit (
     assign req_port_o.address_tag   = paddr_i[ariane_pkg::DCACHE_TAG_WIDTH     +
                                               ariane_pkg::DCACHE_INDEX_WIDTH-1 :
                                               ariane_pkg::DCACHE_INDEX_WIDTH];
+
+    // assign req_port_o.approx        = ((csr_approx_a_i[10:0] == req_port_o.address_index)
+    // && (csr_approx_a_i[55:11] == req_port_o.address_tag)
+    // && (csr_approx_c_i == 64'ha)) ? 1'b1 : 1'b0;
+    
+    assign req_port_o.approx  = ((vaddr_o != 64'h0) && (vaddr_o >= csr_approx_a_i) && (vaddr_o <= csr_approx_b_i)  && (csr_approx_c_i == 64'ha));
+
     // directly output an exception
     assign ex_o = ex_i;
 
@@ -356,6 +366,15 @@ module load_unit (
         valid_o |->  (load_data_q.operator inside {ariane_pkg::LH, ariane_pkg::LHU}) |-> load_data_q.address_offset < 7) else $fatal (1,"invalid address offset used with {LH, LHU}");
     addr_offset2: assert property (@(posedge clk_i) disable iff (~rst_ni)
         valid_o |->  (load_data_q.operator inside {ariane_pkg::LB, ariane_pkg::LBU}) |-> load_data_q.address_offset < 8) else $fatal (1,"invalid address offset used with {LB, LBU}");
+
+    always @(posedge clk_i) begin
+        if(valid_i) begin
+            $display(1,"[Yolo cache3] Valid Input: %01B, Index : %03X, Tag : %12X ,VADDR: %16X, PADDR: %16X, APPROX_en : %01B, CSR_A: %16X, CSR_C_CHECK: %01B, CSR_A_CHECK: %01B, STATE: %1X", valid_i, req_port_o.address_index, req_port_o.address_tag,vaddr_o,paddr_i,req_port_o.approx, csr_approx_a_i,(csr_approx_c_i == 64'ha),(csr_approx_a_i == lsu_ctrl_i.vaddr),state_q);
+        end
+        if(valid_o) begin
+             $display(1,"[Yolo cache4] Valid Output: %01B, DATA: %16X", valid_o, result_o);
+        end
+     end   
 `endif
 //pragma translate_on
 

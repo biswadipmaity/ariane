@@ -101,6 +101,8 @@ module ptw #(
     // directly output the correct physical address
     assign req_port_o.address_index = ptw_pptr_q[DCACHE_INDEX_WIDTH-1:0];
     assign req_port_o.address_tag   = ptw_pptr_q[DCACHE_INDEX_WIDTH+DCACHE_TAG_WIDTH-1:DCACHE_INDEX_WIDTH];
+    // we are never going to approximate this request
+    assign req_port_o.approx      = 1'b0;
     // we are never going to kill this request
     assign req_port_o.kill_req      = '0;
     // we are never going to write with the HPTW

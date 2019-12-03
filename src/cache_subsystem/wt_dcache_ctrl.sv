@@ -43,6 +43,7 @@ module wt_dcache_ctrl #(
   output logic [DCACHE_TAG_WIDTH-1:0]     rd_tag_o,        // tag in - comes one cycle later
   output logic [DCACHE_CL_IDX_WIDTH-1:0]  rd_idx_o,
   output logic [DCACHE_OFFSET_WIDTH-1:0]  rd_off_o,
+  output logic                            approx_o,        // Allow approximation
   output logic                            rd_req_o,        // read the word at offset off_i[:3] in all ways
   output logic                            rd_tag_only_o,   // set to zero here
   input  logic                            rd_ack_i,
@@ -61,6 +62,7 @@ module wt_dcache_ctrl #(
   logic [DCACHE_SET_ASSOC-1:0]    vld_data_d,    vld_data_q;
   logic save_tag, rd_req_d, rd_req_q, rd_ack_d, rd_ack_q;
   logic [1:0] data_size_d, data_size_q;
+  logic allow_approx_d, allow_approx_q;
 
 ///////////////////////////////////////////////////////
 // misc
@@ -72,9 +74,11 @@ module wt_dcache_ctrl #(
   assign address_idx_d = (req_port_o.data_gnt) ? req_port_i.address_index[DCACHE_INDEX_WIDTH-1:DCACHE_OFFSET_WIDTH] : address_idx_q;
   assign address_off_d = (req_port_o.data_gnt) ? req_port_i.address_index[DCACHE_OFFSET_WIDTH-1:0]                  : address_off_q;
   assign data_size_d   = (req_port_o.data_gnt) ? req_port_i.data_size                                               : data_size_q;
+  assign allow_approx_d= (req_port_o.data_gnt) ? req_port_i.approx                                                  : allow_approx_q;
   assign rd_tag_o      = address_tag_d;
   assign rd_idx_o      = address_idx_d;
   assign rd_off_o      = address_off_d;
+  assign approx_o      = allow_approx_d;
 
   assign req_port_o.data_rdata = rd_data_i;
 
@@ -237,6 +241,7 @@ module wt_dcache_ctrl #(
       address_off_q    <= '0;
       vld_data_q       <= '0;
       data_size_q      <= '0;
+      allow_approx_q   <= '0;
       rd_req_q         <= '0;
       rd_ack_q         <= '0;
     end else begin
@@ -246,6 +251,7 @@ module wt_dcache_ctrl #(
       address_off_q    <= address_off_d;
       vld_data_q       <= vld_data_d;
       data_size_q      <= data_size_d;
+      allow_approx_q   <= allow_approx_d;
       rd_req_q         <= rd_req_d;
       rd_ack_q         <= rd_ack_d;
     end

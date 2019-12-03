@@ -703,6 +703,7 @@ package ariane_pkg;
         logic [1:0]                    data_size;
         logic                          kill_req;
         logic                          tag_valid;
+        logic                          approx;
     } dcache_req_i_t;
 
     typedef struct packed {

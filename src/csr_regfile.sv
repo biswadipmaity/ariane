@@ -78,6 +78,11 @@ module csr_regfile #(
     // Caches
     output logic                  icache_en_o,                // L1 ICache Enable
     output logic                  dcache_en_o,                // L1 DCache Enable
+    // Approximation
+    output logic  [63:0]          approx_a_o,                 // A reg
+    output logic  [63:0]          approx_b_o,                 // B reg
+    output logic  [63:0]          approx_c_o,                 // C reg
+
     // Performance Counter
     output logic  [4:0]           perf_addr_o,                // read/write address to performance counter module (up to 29 aux counters possible in riscv encoding.h)
     output logic  [63:0]          perf_data_o,                // write data to performance counter module
@@ -984,6 +989,10 @@ module csr_regfile #(
     assign icache_en_o      = icache_q[0] & (~debug_mode_q);
 `endif
     assign dcache_en_o      = dcache_q[0];
+
+    assign approx_a_o       = approx_a_q;
+    assign approx_b_o       = approx_b_q;
+    assign approx_c_o       = approx_c_q;
 
     // determine if mprv needs to be considered if in debug mode
     assign mprv             = (debug_mode_q && !dcsr_q.mprven) ? 1'b0 : mstatus_q.mprv;

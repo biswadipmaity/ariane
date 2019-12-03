@@ -92,6 +92,7 @@ module wt_dcache #(
   logic [NumPorts-1:0][DCACHE_TAG_WIDTH-1:0]    rd_tag;
   logic [NumPorts-1:0][DCACHE_CL_IDX_WIDTH-1:0] rd_idx;
   logic [NumPorts-1:0][DCACHE_OFFSET_WIDTH-1:0] rd_off;
+  logic [NumPorts-1:0]                          approx_enable;
   logic [63:0]                                  rd_data;
   logic [DCACHE_SET_ASSOC-1:0]                  rd_vld_bits;
   logic [DCACHE_SET_ASSOC-1:0]                  rd_hit_oh;
@@ -195,6 +196,7 @@ module wt_dcache #(
       .rd_tag_o        ( rd_tag        [k] ),
       .rd_idx_o        ( rd_idx        [k] ),
       .rd_off_o        ( rd_off        [k] ),
+      .approx_o        ( approx_enable [k] ),
       .rd_req_o        ( rd_req        [k] ),
       .rd_tag_only_o   ( rd_tag_only   [k] ),
       .rd_ack_i        ( rd_ack        [k] ),
@@ -238,6 +240,7 @@ module wt_dcache #(
     .rd_tag_o        ( rd_tag        [2]   ),
     .rd_idx_o        ( rd_idx        [2]   ),
     .rd_off_o        ( rd_off        [2]   ),
+    .approx_o        ( approx_enable [2]   ),
     .rd_req_o        ( rd_req        [2]   ),
     .rd_tag_only_o   ( rd_tag_only   [2]   ),
     .rd_ack_i        ( rd_ack        [2]   ),
@@ -276,6 +279,7 @@ module wt_dcache #(
     .rd_idx_i          ( rd_idx             ),
     .rd_off_i          ( rd_off             ),
     .rd_req_i          ( rd_req             ),
+    .approx_enable_i   ( approx_enable      ),
     .rd_tag_only_i     ( rd_tag_only        ),
     .rd_ack_o          ( rd_ack             ),
     .rd_vld_bits_o     ( rd_vld_bits        ),

@@ -42,6 +42,7 @@ module wt_dcache_mem #(
   input  logic  [NumPorts-1:0]                              rd_req_i,           // read the word at offset off_i[:3] in all ways
   input  logic  [NumPorts-1:0]                              rd_tag_only_i,      // only do a tag/valid lookup, no access to data arrays
   input  logic  [NumPorts-1:0]                              rd_prio_i,          // 0: low prio, 1: high prio
+  input  logic  [NumPorts-1:0]                              approx_enable_i,
   output logic  [NumPorts-1:0]                              rd_ack_o,
   output logic                [DCACHE_SET_ASSOC-1:0]        rd_vld_bits_o,
   output logic                [DCACHE_SET_ASSOC-1:0]        rd_hit_oh_o,
@@ -87,6 +88,7 @@ module wt_dcache_mem #(
   logic [DCACHE_SET_ASSOC-1:0]                                  vld_wdata;                    // valid bits to write
   logic [DCACHE_SET_ASSOC-1:0][DCACHE_TAG_WIDTH-1:0]            tag_rdata;                    // these are the tags coming from the tagmem
   logic                       [DCACHE_CL_IDX_WIDTH-1:0]         vld_addr;                     // valid bit
+  logic                                                         approx_en;                    // Enable approx
 
   logic [$clog2(NumPorts)-1:0]                                  vld_sel_d, vld_sel_q;
 
@@ -128,6 +130,10 @@ module wt_dcache_mem #(
   assign bank_off_d = (wr_cl_vld_i) ? wr_cl_off_i   : rd_off_i[vld_sel_d];
   assign bank_idx_d = (wr_cl_vld_i) ? wr_cl_idx_i   : rd_idx_i[vld_sel_d];
   assign vld_req    = (wr_cl_vld_i) ? wr_cl_we_i    : (rd_acked) ? '1 : '0;
+  
+  // Check if read errors are enabled
+  assign approx_en  = approx_enable_i[1];
+  // assign approx_en  = approx_enable_i[vld_sel_d];
 
 
   // priority masking
@@ -238,8 +244,9 @@ module wt_dcache_mem #(
       assign wr_cl_off     = wr_cl_off_i[DCACHE_OFFSET_WIDTH-1:3];
   end
 
-  assign rdata         = (wr_cl_vld_i)  ? wr_cl_data_i[wr_cl_off*64 +: 64] :
-                                          rdata_cl[rd_hit_idx];
+  assign rdata         = (approx_en) ? 64'hdeadbeefdeadbeef               :
+                         (wr_cl_vld_i) ? wr_cl_data_i[wr_cl_off*64 +: 64] : 
+                         rdata_cl[rd_hit_idx];
 
   // overlay bytes that hit in the write buffer
   for(genvar k=0; k<8; k++) begin : gen_rd_data
@@ -350,6 +357,15 @@ module wt_dcache_mem #(
   tag_write_duplicate: assert property (
     @(posedge clk_i) disable iff (!rst_ni) |vld_req |-> vld_we |-> !(|tag_write_duplicate_test))
       else $fatal(1,"[l1 dcache] cannot allocate a CL that is already present in the cache");
+
+  always @(posedge clk_i) begin
+      //if(valid_i) begin
+          $display(1,"[Yolo MemR] Tag : %12X, Index : %02X, Offset : %01X,", rd_tag_i[1], rd_idx_i[1], rd_off_i[1]);
+          $display(1,"[Yolo MemR] approx_enable_in: %03B approx_en : %01B", approx_enable_i, approx_en);
+          $display("rdata : %16X",rdata);
+          $display("VLD_SEL : %3B",vld_sel_d);
+      //end
+    end   
 
 `endif
 //pragma translate_on
