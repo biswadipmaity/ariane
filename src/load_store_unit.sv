@@ -80,6 +80,7 @@ module load_store_unit #(
     // those are the signals which are always correct
     // e.g.: they keep the value in the stall case
     lsu_ctrl_t lsu_ctrl;
+    logic      should_approximate;
 
     logic      pop_st;
     logic      pop_ld;
@@ -92,6 +93,7 @@ module load_store_unit #(
     logic [7:0]  be_i;
 
     assign vaddr_i = $unsigned($signed(fu_data_i.imm) + $signed(fu_data_i.operand_a));
+    assign should_approximate = ((vaddr_i != 64'h0) && (vaddr_i >= csr_approx_a_i) && (vaddr_i <= csr_approx_b_i)  && (csr_approx_c_i == 64'ha));
 
     logic                     st_valid_i;
     logic                     ld_valid_i;
@@ -207,9 +209,6 @@ module load_store_unit #(
         // to memory arbiter
         .req_port_i            ( dcache_req_ports_i [1] ),
         .req_port_o            ( dcache_req_ports_o [1] ),
-        .csr_approx_a_i        ( csr_approx_a_i         ),
-        .csr_approx_b_i        ( csr_approx_b_i         ),
-        .csr_approx_c_i        ( csr_approx_c_i         ),
         .*
     );
 
@@ -366,7 +365,7 @@ module load_store_unit #(
     // new data arrives here
     lsu_ctrl_t lsu_req_i;
 
-    assign lsu_req_i = {lsu_valid_i, vaddr_i, fu_data_i.operand_b, be_i, fu_data_i.fu, fu_data_i.operator, fu_data_i.trans_id};
+    assign lsu_req_i = {lsu_valid_i, vaddr_i, fu_data_i.operand_b, be_i, fu_data_i.fu, fu_data_i.operator, fu_data_i.trans_id, should_approximate};
 
     lsu_bypass lsu_bypass_i (
         .lsu_req_i          ( lsu_req_i   ),

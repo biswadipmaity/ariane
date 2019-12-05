@@ -360,10 +360,10 @@ module wt_dcache_mem #(
 
   always @(posedge clk_i) begin
       //if(valid_i) begin
-          $display(1,"[Yolo MemR] Tag : %12X, Index : %02X, Offset : %01X,", rd_tag_i[1], rd_idx_i[1], rd_off_i[1]);
-          $display(1,"[Yolo MemR] approx_enable_in: %03B approx_en : %01B", approx_enable_i, approx_en);
-          $display("rdata : %16X",rdata);
-          $display("VLD_SEL : %3B",vld_sel_d);
+          // $display("[Yolo MemR] Tag : %12X, Index : %02X, Offset : %01X,", rd_tag_i[1], rd_idx_i[1], rd_off_i[1]);
+          // $display("[Yolo MemR] approx_enable_in: %03B approx_en : %01B", approx_enable_i, approx_en);
+          $display("[Yolo MemR] rdata : %16X",rdata);
+          // $display("VLD_SEL : %3B",vld_sel_d);
       //end
     end   
 

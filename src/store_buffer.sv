@@ -34,6 +34,7 @@ module store_buffer (
     input  logic         valid_without_flush_i, // just tell if the address is valid which we are current putting and do not take any further action
 
     input  logic [63:0]  paddr_i,         // physical address of store which needs to be placed in the queue
+    input  logic addr_in_range_i,
     input  logic [63:0]  data_i,          // data which is placed in the queue
     input  logic [7:0]   be_i,            // byte enable in
     input  logic [1:0]   data_size_i,     // type of request we are making (e.g.: bytes to write)
@@ -52,6 +53,7 @@ module store_buffer (
         logic [7:0]  be;
         logic [1:0]  data_size;
         logic        valid;     // this entry is valid, we need this for checking if the address offset matches
+        logic        approx;
     } speculative_queue_n [DEPTH_SPEC-1:0], speculative_queue_q [DEPTH_SPEC-1:0],
       commit_queue_n [DEPTH_COMMIT-1:0],    commit_queue_q [DEPTH_COMMIT-1:0];
 
@@ -88,6 +90,7 @@ module store_buffer (
             speculative_queue_n[speculative_write_pointer_q].be        = be_i;
             speculative_queue_n[speculative_write_pointer_q].data_size = data_size_i;
             speculative_queue_n[speculative_write_pointer_q].valid   = 1'b1;
+            speculative_queue_n[speculative_write_pointer_q].approx   = addr_in_range_i;
             // advance the write pointer
             speculative_write_pointer_n = speculative_write_pointer_q + 1'b1;
             speculative_status_cnt++;
@@ -134,10 +137,10 @@ module store_buffer (
                                                                                     ariane_pkg::DCACHE_INDEX_WIDTH-1 :
                                                                                     ariane_pkg::DCACHE_INDEX_WIDTH];
     // we are never going to approximate this request
-    assign req_port_o.approx      = 1'b0;
     assign req_port_o.data_wdata    = commit_queue_q[commit_read_pointer_q].data;
     assign req_port_o.data_be       = commit_queue_q[commit_read_pointer_q].be;
     assign req_port_o.data_size     = commit_queue_q[commit_read_pointer_q].data_size;
+    assign req_port_o.approx        = commit_queue_q[commit_read_pointer_q].approx;
 
     always_comb begin : store_if
         automatic logic [DEPTH_COMMIT:0] commit_status_cnt;
@@ -275,7 +278,9 @@ module store_buffer (
         else $error("[Commit Queue] You are trying to commit a store although the buffer is full");
     `endif
     //pragma translate_on
+
+    always @(posedge clk_i) begin
+      $display(1,"[Yolo Store Buffer] valid_i : %01B  addr_in_range_i   : %01B   Write_addr : %16X", valid_i, addr_in_range_i, commit_queue_q[commit_read_pointer_q].address);
+      $display(1,"[Yolo Store Buffer] req_port_o.approx : %01B    req_port_o.data_wdata : %16X", req_port_o.approx, req_port_o.data_wdata);
+    end   
 endmodule
-
-
-

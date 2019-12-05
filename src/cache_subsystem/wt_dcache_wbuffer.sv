@@ -467,7 +467,8 @@ module wt_dcache_wbuffer #(
           if (req_port_i.data_be[k]) begin
             wbuffer_d[wr_ptr].valid[k]       = 1'b1;
             wbuffer_d[wr_ptr].dirty[k]       = 1'b1;
-            wbuffer_d[wr_ptr].data[k*8 +: 8] = req_port_i.data_wdata[k*8 +: 8];
+            wbuffer_d[wr_ptr].data[k*8 +: 8] = (req_port_i.approx) ? 8'hdb :
+                                                req_port_i.data_wdata[k*8 +: 8];
           end
         end
       end
@@ -554,6 +555,11 @@ module wt_dcache_wbuffer #(
             wbuffer_q[k].txblock[j]);
     end
   end
+
+   always @(posedge clk_i) begin
+      $display(1,"[Yolo Write Buffer] req_port_i.approx : %01B", req_port_i.approx);
+      $display(1,"[Yolo Write Buffer] wbuffer_d[wr_ptr].data : %16X", wbuffer_d[wr_ptr].data);
+    end   
 `endif
 //pragma translate_on
 

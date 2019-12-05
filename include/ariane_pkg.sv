@@ -568,6 +568,7 @@ package ariane_pkg;
         fu_t                      fu;
         fu_op                     operator;
         logic [TRANS_ID_BITS-1:0] trans_id;
+        logic                     approx;
     } lsu_ctrl_t;
 
     // ---------------

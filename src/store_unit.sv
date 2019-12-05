@@ -66,6 +66,7 @@ module store_unit (
     logic [63:0]  st_data_n,      st_data_q;
     logic [7:0]   st_be_n,        st_be_q;
     logic [1:0]   st_data_size_n, st_data_size_q;
+    logic         approx_en_n,    approx_en_q;
     amo_t         amo_op_d,       amo_op_q;
 
     logic [TRANS_ID_BITS-1:0] trans_id_n, trans_id_q;
@@ -183,6 +184,7 @@ module store_unit (
         st_data_n = instr_is_amo ? lsu_ctrl_i.data
                                  : data_align(lsu_ctrl_i.vaddr[2:0], lsu_ctrl_i.data);
         st_data_size_n = extract_transfer_size(lsu_ctrl_i.operator);
+        approx_en_n = lsu_ctrl_i.approx;
         // save AMO op for next cycle
         case (lsu_ctrl_i.operator)
             AMO_LRW, AMO_LRD:     amo_op_d = AMO_LR;
@@ -230,6 +232,7 @@ module store_unit (
         // the whole pipeline anyway
         .valid_without_flush_i ( st_valid_without_flush ),
         .paddr_i,
+        .addr_in_range_i       ( approx_en_q            ),
         .data_i                ( st_data_q              ),
         .be_i                  ( st_be_q                ),
         .data_size_i           ( st_data_size_q         ),
@@ -264,6 +267,7 @@ module store_unit (
             st_data_size_q <= '0;
             trans_id_q     <= '0;
             amo_op_q       <= AMO_NONE;
+            approx_en_q    <= '0;
         end else begin
             state_q        <= state_d;
             st_be_q        <= st_be_n;
@@ -271,6 +275,7 @@ module store_unit (
             trans_id_q     <= trans_id_n;
             st_data_size_q <= st_data_size_n;
             amo_op_q       <= amo_op_d;
+            approx_en_q    <= approx_en_n;
         end
     end
 
