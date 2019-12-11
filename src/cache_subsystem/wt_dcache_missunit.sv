@@ -31,6 +31,7 @@ module wt_dcache_missunit #(
   // local cache management signals
   input  logic                                       wbuffer_empty_i,
   output logic                                       cache_en_o,  // local cache enable signal
+  input  logic [63:0]                                csr_approx_ctrl_i, // from CSR Approximation control register
   // AMO interface
   input  amo_req_t                                   amo_req_i,
   output amo_resp_t                                  amo_resp_o,
@@ -41,6 +42,7 @@ module wt_dcache_missunit #(
   input  logic [NumPorts-1:0]                        miss_we_i,
   input  logic [NumPorts-1:0][63:0]                  miss_wdata_i,
   input  logic [NumPorts-1:0][63:0]                  miss_paddr_i,
+  input  logic [NumPorts-1:0]                        miss_approx_i,
   input  logic [NumPorts-1:0][DCACHE_SET_ASSOC-1:0]  miss_vld_bits_i,
   input  logic [NumPorts-1:0][2:0]                   miss_size_i,
   input  logic [NumPorts-1:0][CACHE_ID_WIDTH-1:0]    miss_id_i,          // used as transaction ID
@@ -83,6 +85,7 @@ module wt_dcache_missunit #(
     logic                                nc      ;
     logic [$clog2(DCACHE_SET_ASSOC)-1:0] repl_way;
     logic [$clog2(NumPorts)-1:0]        miss_port_idx;
+    logic                               approx;
   } mshr_t;
 
   mshr_t mshr_d, mshr_q;
@@ -171,6 +174,7 @@ module wt_dcache_missunit #(
   assign mshr_d.nc              = (mshr_allocate)  ? miss_nc_i      [miss_port_idx] : mshr_q.nc;
   assign mshr_d.repl_way        = (mshr_allocate)  ? repl_way                       : mshr_q.repl_way;
   assign mshr_d.miss_port_idx   = (mshr_allocate)  ? miss_port_idx                  : mshr_q.miss_port_idx;
+  assign mshr_d.approx          = (mshr_allocate)  ? miss_approx_i                  : mshr_q.approx;
 
   // currently we only have one outstanding read TX, hence an incoming load clears the MSHR
   assign mshr_vld_d = (mshr_allocate) ? 1'b1 :
@@ -224,7 +228,9 @@ module wt_dcache_missunit #(
   assign mem_data_o.tid    = (amo_sel) ? AmoTxId             : miss_id_i[miss_port_idx];
   assign mem_data_o.nc     = (amo_sel) ? 1'b1                : miss_nc_i[miss_port_idx];
   assign mem_data_o.way    = (amo_sel) ? '0                  : repl_way;
-  assign mem_data_o.data   = (amo_sel) ? amo_data            : miss_wdata_i[miss_port_idx];
+  assign mem_data_o.data   = (amo_sel) ? amo_data            : 
+                             (miss_approx_i && (csr_approx_ctrl_i[31:24] == 8'hff)) ? 64'hbeefdeadbeefdead : // Approximate L2 writes
+                             miss_wdata_i[miss_port_idx];
   assign mem_data_o.size   = (amo_sel) ? amo_req_i.size      : miss_size_i [miss_port_idx];
   assign mem_data_o.amo_op = (amo_sel) ? amo_req_i.amo_op    : AMO_NONE;
 

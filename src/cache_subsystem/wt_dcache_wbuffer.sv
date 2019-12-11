@@ -62,9 +62,11 @@ module wt_dcache_wbuffer #(
    // core request ports
   input  dcache_req_i_t                      req_port_i,
   output dcache_req_o_t                      req_port_o,
+  input  logic [63:0]                        csr_approx_ctrl_i,
   // interface to miss handler
   input  logic                               miss_ack_i,
   output logic [63:0]                        miss_paddr_o,
+  output logic                               miss_approx_o,
   output logic                               miss_req_o,
   output logic                               miss_we_o,       // always 1 here
   output logic [63:0]                        miss_wdata_o,
@@ -187,6 +189,8 @@ module wt_dcache_wbuffer #(
   assign miss_wdata_o = repData64(wbuffer_dirty_mux.data,
                                   bdirty_off,
                                   miss_size_o[1:0]);
+
+  assign miss_approx_o = wbuffer_dirty_mux.approx;
 
   assign tx_be        = toByteEnable8(bdirty_off,
                                       miss_size_o[1:0]);
@@ -461,13 +465,14 @@ module wt_dcache_wbuffer #(
 
         wbuffer_d[wr_ptr].checked = 1'b0;
         wbuffer_d[wr_ptr].wtag    = {req_port_i.address_tag, req_port_i.address_index[DCACHE_INDEX_WIDTH-1:3]};
+        wbuffer_d[wr_ptr].approx  = req_port_i.approx;
 
         // mark bytes as dirty
         for (int k=0; k<8; k++) begin
           if (req_port_i.data_be[k]) begin
             wbuffer_d[wr_ptr].valid[k]       = 1'b1;
             wbuffer_d[wr_ptr].dirty[k]       = 1'b1;
-            wbuffer_d[wr_ptr].data[k*8 +: 8] = (req_port_i.approx) ? 8'hdb :
+            wbuffer_d[wr_ptr].data[k*8 +: 8] = (req_port_i.approx && (csr_approx_ctrl_i[15:8] == 8'hff)) ? 8'hdb :      // Approximate L1 Writes
                                                 req_port_i.data_wdata[k*8 +: 8];
           end
         end

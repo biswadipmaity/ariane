@@ -93,7 +93,7 @@ module load_store_unit #(
     logic [7:0]  be_i;
 
     assign vaddr_i = $unsigned($signed(fu_data_i.imm) + $signed(fu_data_i.operand_a));
-    assign should_approximate = ((vaddr_i != 64'h0) && (vaddr_i >= csr_approx_a_i) && (vaddr_i <= csr_approx_b_i)  && (csr_approx_c_i == 64'ha));
+    assign should_approximate = ((vaddr_i != 64'h0) && (vaddr_i >= csr_approx_a_i) && (vaddr_i <= csr_approx_b_i));
 
     logic                     st_valid_i;
     logic                     ld_valid_i;

@@ -29,6 +29,7 @@ module wt_dcache #(
   input  logic                           enable_i,    // from CSR
   input  logic                           flush_i,     // high until acknowledged
   output logic                           flush_ack_o, // send a single cycle acknowledge signal when the cache is flushed
+  input  logic [63:0]                    csr_approx_ctrl_i, // from CSR
   output logic                           miss_o,      // we missed on a ld/st
   output logic                           wbuffer_empty_o,
 
@@ -77,6 +78,7 @@ module wt_dcache #(
   logic [NumPorts-1:0]                          miss_we;
   logic [NumPorts-1:0][63:0]                    miss_wdata;
   logic [NumPorts-1:0][63:0]                    miss_paddr;
+  logic [NumPorts-1:0]                          miss_approx;
   logic [NumPorts-1:0][DCACHE_SET_ASSOC-1:0]    miss_vld_bits;
   logic [NumPorts-1:0][2:0]                     miss_size;
   logic [NumPorts-1:0][CACHE_ID_WIDTH-1:0]      miss_id;
@@ -122,6 +124,7 @@ module wt_dcache #(
     .miss_o             ( miss_o             ),
     .wbuffer_empty_i    ( wbuffer_empty_o    ),
     .cache_en_o         ( cache_en           ),
+    .csr_approx_ctrl_i  ( csr_approx_ctrl_i  ),
     // amo interface
     .amo_req_i          ( amo_req_i          ),
     .amo_resp_o         ( amo_resp_o         ),
@@ -132,6 +135,7 @@ module wt_dcache #(
     .miss_we_i          ( miss_we            ),
     .miss_wdata_i       ( miss_wdata         ),
     .miss_paddr_i       ( miss_paddr         ),
+    .miss_approx_i      ( miss_approx        ),
     .miss_vld_bits_i    ( miss_vld_bits      ),
     .miss_size_i        ( miss_size          ),
     .miss_id_i          ( miss_id            ),
@@ -185,6 +189,7 @@ module wt_dcache #(
       .miss_wdata_o    ( miss_wdata    [k] ),
       .miss_vld_bits_o ( miss_vld_bits [k] ),
       .miss_paddr_o    ( miss_paddr    [k] ),
+      .miss_approx_o   ( miss_approx   [k] ),
       .miss_nc_o       ( miss_nc       [k] ),
       .miss_size_o     ( miss_size     [k] ),
       .miss_id_o       ( miss_id       [k] ),
@@ -224,6 +229,7 @@ module wt_dcache #(
     // request ports from core (store unit)
     .req_port_i      ( req_ports_i   [2]   ),
     .req_port_o      ( req_ports_o   [2]   ),
+    .csr_approx_ctrl_i ( csr_approx_ctrl_i ),
     // miss unit interface
     .miss_req_o      ( miss_req      [2]   ),
     .miss_ack_i      ( miss_ack      [2]   ),
@@ -231,6 +237,7 @@ module wt_dcache #(
     .miss_wdata_o    ( miss_wdata    [2]   ),
     .miss_vld_bits_o ( miss_vld_bits [2]   ),
     .miss_paddr_o    ( miss_paddr    [2]   ),
+    .miss_approx_o   ( miss_approx   [2]   ),
     .miss_nc_o       ( miss_nc       [2]   ),
     .miss_size_o     ( miss_size     [2]   ),
     .miss_id_o       ( miss_id       [2]   ),
@@ -280,6 +287,7 @@ module wt_dcache #(
     .rd_off_i          ( rd_off             ),
     .rd_req_i          ( rd_req             ),
     .approx_enable_i   ( approx_enable      ),
+    .csr_approx_ctrl_i ( csr_approx_ctrl_i  ),
     .rd_tag_only_i     ( rd_tag_only        ),
     .rd_ack_o          ( rd_ack             ),
     .rd_vld_bits_o     ( rd_vld_bits        ),

@@ -81,6 +81,7 @@ package wt_cache_pkg;
     logic [7:0]                                                             txblock; // byte is part of transaction in-flight
     logic                                                                   checked; // if cache state of this word has been checked
     logic [ariane_pkg::DCACHE_SET_ASSOC-1:0]                                hit_oh;  // valid way in the cache
+    logic                                                                   approx;  // data should be approximate
   } wbuffer_t;
 
   // TX status registers are indexed with the transaction ID

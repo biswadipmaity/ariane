@@ -32,6 +32,7 @@ module wt_dcache_ctrl #(
   output logic [63:0]                     miss_wdata_o,    // unused (set to 0)
   output logic [DCACHE_SET_ASSOC-1:0]     miss_vld_bits_o, // valid bits at the missed index
   output logic [63:0]                     miss_paddr_o,
+  output logic                            miss_approx_o,
   output logic                            miss_nc_o,       // request to I/O space
   output logic [2:0]                      miss_size_o,     // 00: 1byte, 01: 2byte, 10: 4byte, 11: 8byte, 111: cacheline
   output logic [CACHE_ID_WIDTH-1:0]       miss_id_o,       // set to constant ID
@@ -86,6 +87,7 @@ module wt_dcache_ctrl #(
   assign miss_vld_bits_o       = vld_data_q;
   assign miss_paddr_o          = {address_tag_q, address_idx_q, address_off_q};
   assign miss_size_o           = (miss_nc_o) ? data_size_q : 3'b111;
+  assign miss_approx_o         = allow_approx_q;
 
   // noncacheable if request goes to I/O space, or if cache is disabled
   assign miss_nc_o = (~cache_en_i) | (~ariane_pkg::is_inside_cacheable_regions(ArianeCfg, {address_tag_q, {DCACHE_INDEX_WIDTH{1'b0}}}));

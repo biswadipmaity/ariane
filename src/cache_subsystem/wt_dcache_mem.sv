@@ -43,6 +43,7 @@ module wt_dcache_mem #(
   input  logic  [NumPorts-1:0]                              rd_tag_only_i,      // only do a tag/valid lookup, no access to data arrays
   input  logic  [NumPorts-1:0]                              rd_prio_i,          // 0: low prio, 1: high prio
   input  logic  [NumPorts-1:0]                              approx_enable_i,
+  input  logic  [63:0]                                      csr_approx_ctrl_i,
   output logic  [NumPorts-1:0]                              rd_ack_o,
   output logic                [DCACHE_SET_ASSOC-1:0]        rd_vld_bits_o,
   output logic                [DCACHE_SET_ASSOC-1:0]        rd_hit_oh_o,
@@ -119,8 +120,9 @@ module wt_dcache_mem #(
                                (wr_req_i[j]   & wr_ack_o)     ? wr_data_be_i              :
                                                                 '0;
 
-      assign bank_wdata[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ?  wr_cl_data_i[k*64 +: 64] :
-                                                                 wr_data_i;
+      assign bank_wdata[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ?  
+                                  (approx_en && (csr_approx_ctrl_i[23:16] == 8'hff)) ? 64'hdeadbeefdeadbeef : wr_cl_data_i[k*64 +: 64] :  // Approximate L2 Reads
+                                  wr_data_i;                  // Approximate L1 writes alternate option
     end
   end
 
@@ -244,9 +246,9 @@ module wt_dcache_mem #(
       assign wr_cl_off     = wr_cl_off_i[DCACHE_OFFSET_WIDTH-1:3];
   end
 
-  assign rdata         = (approx_en) ? 64'hdeadbeefdeadbeef               :
-                         (wr_cl_vld_i) ? wr_cl_data_i[wr_cl_off*64 +: 64] : 
-                         rdata_cl[rd_hit_idx];
+  assign rdata         = (approx_en && (csr_approx_ctrl_i[7:0] == 8'hff)) ? 64'hdeadbeefdeadbeef : // Approximate L1 Reads
+                         (wr_cl_vld_i) ? wr_cl_data_i[wr_cl_off*64 +: 64] : // l1 miss, data from l2
+                         rdata_cl[rd_hit_idx];                              // l1 hit
 
   // overlay bytes that hit in the write buffer
   for(genvar k=0; k<8; k++) begin : gen_rd_data

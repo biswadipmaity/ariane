@@ -597,6 +597,7 @@ module ariane #(
     .dcache_enable_i       ( dcache_en_csr_nbdcache      ),
     .dcache_flush_i        ( dcache_flush_ctrl_cache     ),
     .dcache_flush_ack_o    ( dcache_flush_ack_cache_ctrl ),
+    .csr_approx_ctrl_i     ( csr_approx_c                ),
     // to commit stage
     .dcache_amo_req_i      ( amo_req                     ),
     .dcache_amo_resp_o     ( amo_resp                    ),

@@ -368,10 +368,10 @@ module load_unit (
 
     always @(posedge clk_i) begin
         if(valid_i) begin
-            $display(1,"[Yolo cache3] Valid Input: %01B, Index : %03X, Tag : %12X ,VADDR: %16X, PADDR: %16X, APPROX_en : %01B, STATE: %1X", valid_i, req_port_o.address_index, req_port_o.address_tag,vaddr_o,paddr_i,req_port_o.approx, state_q);
+            $display(1,"[Yolo L1 Load in] Valid Input: %01B, Index : %03X, Tag : %12X ,VADDR: %16X, PADDR: %16X, APPROX_en : %01B, STATE: %1X", valid_i, req_port_o.address_index, req_port_o.address_tag,vaddr_o,paddr_i,req_port_o.approx, state_q);
         end
         if(valid_o) begin
-             $display(1,"[Yolo cache4] Valid Output: %01B, DATA: %16X", valid_o, result_o);
+             $display(1,"[Yolo L1 Load out] Valid Output: %01B, DATA: %16X", valid_o, result_o);
         end
      end   
 `endif

@@ -41,6 +41,7 @@ module wt_cache_subsystem #(
   input  logic                           dcache_enable_i,        // from CSR
   input  logic                           dcache_flush_i,         // high until acknowledged
   output logic                           dcache_flush_ack_o,     // send a single cycle acknowledge signal when the cache is flushed
+  input logic [63:0]                     csr_approx_ctrl_i,      // from CSR Approximate Control register
   output logic                           dcache_miss_o,          // we missed on a ld/st
   // AMO interface
   input amo_req_t                        dcache_amo_req_i,
@@ -108,6 +109,7 @@ module wt_cache_subsystem #(
     .enable_i        ( dcache_enable_i         ),
     .flush_i         ( dcache_flush_i          ),
     .flush_ack_o     ( dcache_flush_ack_o      ),
+    .csr_approx_ctrl_i ( csr_approx_ctrl_i     ),
     .miss_o          ( dcache_miss_o           ),
     .wbuffer_empty_o ( wbuffer_empty_o         ),
     .amo_req_i       ( dcache_amo_req_i        ),
