@@ -146,8 +146,8 @@ module wt_dcache_mem #(
                                                                 '0;
 
       //(wr_cl_approx_i[k] && (csr_approx_l2_r_ber_i[23:16] == 8'hff)) ? 64'hdeadbeefdeadbeef : wr_cl_data_i[k*64 +: 64] :  // Approximate L2 Reads
-      assign bank_wdata[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ? wr_cl_data_i[k*64 +: 64] ^ mask_ber_l2r[k] :
-                                  wr_data_i;                  // Approximate L1 writes alternate option
+      assign bank_wdata[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ?  wr_cl_data_i[k*64 +: 64] ^ mask_ber_l2r[k] :
+                                                                 wr_data_i;     // Approximate L1 writes alternate option
     end
   end
 
@@ -396,19 +396,25 @@ module wt_dcache_mem #(
       else $fatal(1,"[l1 dcache] cannot allocate a CL that is already present in the cache");
 
   always @(posedge clk_i) begin
-      //if(valid_i) begin
-          // $display("[Yolo MemR] Tag : %12X, Index : %02X, Offset : %01X,", rd_tag_i[1], rd_idx_i[1], rd_off_i[1]);
-          // $display("[Yolo MemR] approx_enable_in: %03B approx_en : %01B", approx_enable_i, approx_en);
-          $display("[Yolo MemR] rdata : %16X , wr_cl_vld_i: %1B",rdata, wr_cl_vld_i);
-          $display("[Yolo MemR] rdata cacheline : %16X %16X %16X %16X", rdata_cl[0], rdata_cl[1], rdata_cl[2], rdata_cl[3]);
-          $display("[Yolo MemR] wr_cl_data_i : %16X %16X", wr_cl_data_i[0], wr_cl_data_i[1]);
-          $display("[Yolo MemR] Write Cacheline approx: %1B %1B",wr_cl_approx_i[0],wr_cl_approx_i[1]);
-          $display("[Yolo MemR] Write Cacheline Write Enable: %1B %1B %1B %1B",wr_cl_we_i[0],wr_cl_we_i[1],wr_cl_we_i[2],wr_cl_we_i[3]);
-          $display("[Yolo MemR] bank_wdata[0]: %16X %16X %16X %16X",bank_wdata[0][0],bank_wdata[0][1],bank_wdata[0][2],bank_wdata[0][3]);
-          $display("[Yolo MemR] bank_wdata[1]: %16X %16X %16X %16X",bank_wdata[1][0],bank_wdata[1][1],bank_wdata[1][2],bank_wdata[1][3]);
-          $display("[Yolo MemR] wr_data_i: %16X", wr_data_i);
-          // $display("VLD_SEL : %3B",vld_sel_d);
-      //end
+      // $display("[Yolo MemR] Tag : %12X, Index : %02X, Offset : %01X,", rd_tag_i[1], rd_idx_i[1], rd_off_i[1]);
+      // $display("[Yolo MemR] approx_enable_in: %03B approx_en : %01B", approx_enable_i, approx_en);
+      $display("[Yolo MemR] rdata : %16X , wr_cl_vld_i: %1B",rdata, wr_cl_vld_i);
+
+      if(wr_cl_vld_i) begin
+        $display("[Yolo MemR] wr_cl_data_i : %16X %16X", wr_cl_data_i[63:0], wr_cl_data_i[127:64]);
+        $display("[Yolo MemR] wr_cl_approx_i: %1B %1B",wr_cl_approx_i[0],wr_cl_approx_i[1]);
+        $display("[Yolo MemR] wr_cl_we_i: %1B %1B %1B %1B",wr_cl_we_i[0],wr_cl_we_i[1],wr_cl_we_i[2],wr_cl_we_i[3]);
+      end
+      else begin
+        $display("[Yolo MemR] rdata cacheline : %16X %16X %16X %16X", rdata_cl[0], rdata_cl[1], rdata_cl[2], rdata_cl[3]);
+        $display("[Yolo MemR] wr_data_i: %16X", wr_data_i);
+      end
+  
+      $display("[Yolo MemR] bank_wdata[0]: %16X %16X %16X %16X",bank_wdata[0][0],bank_wdata[0][1],bank_wdata[0][2],bank_wdata[0][3]);
+      $display("[Yolo MemR] bank_wdata[1]: %16X %16X %16X %16X",bank_wdata[1][0],bank_wdata[1][1],bank_wdata[1][2],bank_wdata[1][3]);      
+      
+      // $display("VLD_SEL : %3B",vld_sel_d);
+  //end
     end   
 
 `endif

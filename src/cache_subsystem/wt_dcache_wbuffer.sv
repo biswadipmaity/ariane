@@ -131,7 +131,6 @@ module wt_dcache_wbuffer #(
   logic [DCACHE_CL_IDX_WIDTH-1:0] wr_cl_idx_q, wr_cl_idx_d;
 
   logic [63:0] debug_paddr [DCACHE_WBUF_DEPTH-1:0];
-  logic [63:0] data_before_error;
   logic [63:0] mask_ber_l1w;
 
   wbuffer_t wbuffer_check_mux, wbuffer_dirty_mux;
@@ -482,13 +481,12 @@ module wt_dcache_wbuffer #(
           if (req_port_i.data_be[k]) begin
             wbuffer_d[wr_ptr].valid[k]       = 1'b1;
             wbuffer_d[wr_ptr].dirty[k]       = 1'b1;
-            data_before_error[k*8 +: 8]      =  req_port_i.data_wdata[k*8 +: 8];
+            // Approximate L1 Writes
+            wbuffer_d[wr_ptr].data[k*8 +: 8] = req_port_i.data_wdata[k*8 +: 8] ^ mask_ber_l1w[k*8 +: 8];
           end
         end
 
-        // Approximate L1 Writes
-        //wbuffer_d[wr_ptr].data = (req_port_i.approx && (csr_approx_l1_w_ber_i[15:8] == 8'hff)) ? 64'hdeadbeefdeadbeef : data_before_error;
-        wbuffer_d[wr_ptr].data = data_before_error ^ mask_ber_l1w;
+        //(req_port_i.approx && (csr_approx_l1_w_ber_i[15:8] == 8'hff)) ? 64'hdeadbeefdeadbeef : data_before_error;
       end
     end
   end

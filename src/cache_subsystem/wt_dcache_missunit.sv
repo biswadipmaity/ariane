@@ -574,9 +574,14 @@ end
       else $fatal(1,"[l1 dcache missunit] at least two ports are required (one read port, one write port)");
  end
 
-  // always @(posedge clk_i) begin
-  //     $display("[Yolo Miss Unit] Write Cacheline approx: %1B %1B",wr_cl_approx_i[0],wr_cl_approx_i[1]);
-  //   end   
+  always @(posedge clk_i) begin
+    if(!amo_sel && !miss_vld_bits_i) begin
+        $display("[Yolo missunit] miss_port_idx: %d", miss_port_idx);
+        $display("[Yolo missunit] miss_wdata_i: %16X %16X %16X",miss_wdata_i[0],miss_wdata_i[1],miss_wdata_i[2]);
+        $display("[Yolo missunit] miss_approx_i: %1B %1B %1B", miss_approx_i[0], miss_approx_i[1], miss_approx_i[2]);
+        $display("[Yolo missunit] miss_paddr_i: %16X %16X %16X", miss_paddr_i[0], miss_paddr_i[1], miss_paddr_i[2]);
+    end
+  end   
 
 `endif
 //pragma translate_on

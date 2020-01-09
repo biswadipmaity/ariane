@@ -15,7 +15,7 @@ logic [63:0] lfsr_val [64];
     lfsr #(
          .OutWidth (64), 
          .RstVal(k+1),
-         .CipherLayers(2)
+         .CipherLayers(0)
       ) i_lfsr (
       .clk_i          ( clk_i       ),
       .rst_ni         ( rst_ni      ),
@@ -26,7 +26,9 @@ logic [63:0] lfsr_val [64];
 
   end
 
-assign mask = en_i ? compare_lfsr : 64'h0;
+  assign mask = en_i ? compare_lfsr : 64'h0;
+  // assign mask = en_i ? 64'hffffffffffffffffffff : 64'h0;
+
 
 //pragma translate_off
 // `ifndef VERILATOR
