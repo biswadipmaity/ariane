@@ -326,6 +326,9 @@ package riscv;
         CSR_APPROX_A       = 12'h801,
         CSR_APPROX_B       = 12'h802,
         CSR_APPROX_C       = 12'h803,
+        CSR_APPROX_D       = 12'h804,
+        CSR_APPROX_E       = 12'h805,
+        CSR_APPROX_F       = 12'h806,
         // Supervisor Mode CSRs
         CSR_SSTATUS        = 12'h100,
         CSR_SIE            = 12'h104,

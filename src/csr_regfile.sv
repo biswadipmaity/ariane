@@ -82,6 +82,9 @@ module csr_regfile #(
     output logic  [63:0]          approx_a_o,                 // A reg
     output logic  [63:0]          approx_b_o,                 // B reg
     output logic  [63:0]          approx_c_o,                 // C reg
+    output logic  [63:0]          approx_d_o,                 // D reg
+    output logic  [63:0]          approx_e_o,                 // E reg
+    output logic  [63:0]          approx_f_o,                 // F reg
 
     // Performance Counter
     output logic  [4:0]           perf_addr_o,                // read/write address to performance counter module (up to 29 aux counters possible in riscv encoding.h)
@@ -142,6 +145,10 @@ module csr_regfile #(
     logic [63:0] approx_a_q, approx_a_d;
     logic [63:0] approx_b_q, approx_b_d;
     logic [63:0] approx_c_q, approx_c_d;
+    logic [63:0] approx_d_q, approx_d_d;
+    logic [63:0] approx_e_q, approx_e_d;
+    logic [63:0] approx_f_q, approx_f_d;
+    
     // ----------------
     // Assignments
     // ----------------
@@ -195,6 +202,15 @@ module csr_regfile #(
                 end
                 riscv::CSR_APPROX_C: begin
                     csr_rdata = approx_c_q;
+                end
+                riscv::CSR_APPROX_D: begin
+                    csr_rdata = approx_d_q;
+                end
+                riscv::CSR_APPROX_E: begin
+                    csr_rdata = approx_e_q;
+                end
+                riscv::CSR_APPROX_F: begin
+                    csr_rdata = approx_f_q;
                 end
                 // debug registers
                 riscv::CSR_DCSR:               csr_rdata = {32'b0, dcsr_q};
@@ -323,6 +339,9 @@ module csr_regfile #(
         approx_a_d              = approx_a_q;
         approx_b_d              = approx_b_q;
         approx_c_d              = approx_c_q;
+        approx_d_d              = approx_d_q;
+        approx_e_d              = approx_e_q;
+        approx_f_d              = approx_f_q;
         priv_lvl_d              = priv_lvl_q;
         debug_mode_d            = debug_mode_q;
         dcsr_d                  = dcsr_q;
@@ -416,6 +435,15 @@ module csr_regfile #(
                 end
                 riscv::CSR_APPROX_C: begin
                     approx_c_d = csr_wdata;
+                end
+                riscv::CSR_APPROX_D: begin
+                    approx_d_d = csr_wdata;
+                end
+                riscv::CSR_APPROX_E: begin
+                    approx_e_d = csr_wdata;
+                end
+                riscv::CSR_APPROX_F: begin
+                    approx_f_d = csr_wdata;
                 end
                 // debug CSR
                 riscv::CSR_DCSR: begin
@@ -993,6 +1021,9 @@ module csr_regfile #(
     assign approx_a_o       = approx_a_q;
     assign approx_b_o       = approx_b_q;
     assign approx_c_o       = approx_c_q;
+    assign approx_d_o       = approx_d_q;
+    assign approx_e_o       = approx_e_q;
+    assign approx_f_o       = approx_f_q;
 
     // determine if mprv needs to be considered if in debug mode
     assign mprv             = (debug_mode_q && !dcsr_q.mprven) ? 1'b0 : mstatus_q.mprv;
@@ -1009,6 +1040,9 @@ module csr_regfile #(
             approx_a_q             <= 64'b0;
             approx_b_q             <= 64'b0;
             approx_c_q             <= 64'b0;
+            approx_d_q             <= 64'b0;
+            approx_e_q             <= 64'b0;
+            approx_f_q             <= 64'b0;
             // debug signals
             debug_mode_q           <= 1'b0;
             dcsr_q                 <= '0;
@@ -1053,6 +1087,9 @@ module csr_regfile #(
             approx_a_q            <= approx_a_d;
             approx_b_q            <= approx_b_d;
             approx_c_q            <= approx_c_d;
+            approx_d_q            <= approx_d_d;
+            approx_e_q            <= approx_e_d;
+            approx_f_q            <= approx_f_d;
             // debug signals
             debug_mode_q           <= debug_mode_d;
             dcsr_q                 <= dcsr_d;

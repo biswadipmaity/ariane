@@ -47,7 +47,6 @@ module ex_stage #(
     input  logic                                   csr_commit_i,
     input  logic [63:0]                            csr_approx_a_i,        // from CSR
     input  logic [63:0]                            csr_approx_b_i,        // from CSR
-    input  logic [63:0]                            csr_approx_c_i,        // from CSR
     // MULT
     input  logic                                   mult_valid_i,      // Output is valid
     // LSU
@@ -291,7 +290,6 @@ module ex_stage #(
         .flush_tlb_i,
         .csr_approx_a_i,
         .csr_approx_b_i,
-        .csr_approx_c_i,
         .itlb_miss_o,
         .dtlb_miss_o,
         .dcache_req_ports_i,

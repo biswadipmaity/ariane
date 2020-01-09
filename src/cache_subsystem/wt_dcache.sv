@@ -29,7 +29,10 @@ module wt_dcache #(
   input  logic                           enable_i,    // from CSR
   input  logic                           flush_i,     // high until acknowledged
   output logic                           flush_ack_o, // send a single cycle acknowledge signal when the cache is flushed
-  input  logic [63:0]                    csr_approx_ctrl_i, // from CSR
+  input logic [63:0]                     csr_approx_l1_r_ber_i,  // from CSR Approximate Control register
+  input logic [63:0]                     csr_approx_l1_w_ber_i,  // from CSR Approximate Control register
+  input logic [63:0]                     csr_approx_l2_r_ber_i,  // from CSR Approximate Control register
+  input logic [63:0]                     csr_approx_l2_w_ber_i,  // from CSR Approximate Control register
   output logic                           miss_o,      // we missed on a ld/st
   output logic                           wbuffer_empty_o,
 
@@ -63,6 +66,7 @@ module wt_dcache #(
   logic [DCACHE_OFFSET_WIDTH-1:0] wr_cl_off;
   logic [DCACHE_LINE_WIDTH-1:0]   wr_cl_data;
   logic [DCACHE_LINE_WIDTH/8-1:0] wr_cl_data_be;
+  logic [DCACHE_LINE_WIDTH/64-1:0] wr_cl_approx;
   logic [DCACHE_SET_ASSOC-1:0]    wr_vld_bits;
   logic [DCACHE_SET_ASSOC-1:0]    wr_req;
   logic                           wr_ack;
@@ -124,7 +128,7 @@ module wt_dcache #(
     .miss_o             ( miss_o             ),
     .wbuffer_empty_i    ( wbuffer_empty_o    ),
     .cache_en_o         ( cache_en           ),
-    .csr_approx_ctrl_i  ( csr_approx_ctrl_i  ),
+    .csr_approx_l2_w_ber_i  ( csr_approx_l2_w_ber_i  ),
     // amo interface
     .amo_req_i          ( amo_req_i          ),
     .amo_resp_o         ( amo_resp_o         ),
@@ -154,6 +158,7 @@ module wt_dcache #(
     .wr_cl_off_o        ( wr_cl_off          ),
     .wr_cl_data_o       ( wr_cl_data         ),
     .wr_cl_data_be_o    ( wr_cl_data_be      ),
+    .wr_cl_approx_o     ( wr_cl_approx       ),
     .wr_vld_bits_o      ( wr_vld_bits        ),
     // memory interface
     .mem_rtrn_vld_i     ( mem_rtrn_vld_i     ),
@@ -229,7 +234,7 @@ module wt_dcache #(
     // request ports from core (store unit)
     .req_port_i      ( req_ports_i   [2]   ),
     .req_port_o      ( req_ports_o   [2]   ),
-    .csr_approx_ctrl_i ( csr_approx_ctrl_i ),
+    .csr_approx_l1_w_ber_i ( csr_approx_l1_w_ber_i ),
     // miss unit interface
     .miss_req_o      ( miss_req      [2]   ),
     .miss_ack_i      ( miss_ack      [2]   ),
@@ -287,7 +292,8 @@ module wt_dcache #(
     .rd_off_i          ( rd_off             ),
     .rd_req_i          ( rd_req             ),
     .approx_enable_i   ( approx_enable      ),
-    .csr_approx_ctrl_i ( csr_approx_ctrl_i  ),
+    .csr_approx_l1_r_ber_i ( csr_approx_l1_r_ber_i  ),
+    .csr_approx_l2_r_ber_i ( csr_approx_l2_r_ber_i  ),
     .rd_tag_only_i     ( rd_tag_only        ),
     .rd_ack_o          ( rd_ack             ),
     .rd_vld_bits_o     ( rd_vld_bits        ),
@@ -302,6 +308,7 @@ module wt_dcache #(
     .wr_cl_off_i       ( wr_cl_off          ),
     .wr_cl_data_i      ( wr_cl_data         ),
     .wr_cl_data_be_i   ( wr_cl_data_be      ),
+    .wr_cl_approx_i    ( wr_cl_approx       ),
     .wr_vld_bits_i     ( wr_vld_bits        ),
     // single word write port
     .wr_req_i          ( wr_req             ),

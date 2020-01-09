@@ -43,7 +43,8 @@ module wt_dcache_mem #(
   input  logic  [NumPorts-1:0]                              rd_tag_only_i,      // only do a tag/valid lookup, no access to data arrays
   input  logic  [NumPorts-1:0]                              rd_prio_i,          // 0: low prio, 1: high prio
   input  logic  [NumPorts-1:0]                              approx_enable_i,
-  input  logic  [63:0]                                      csr_approx_ctrl_i,
+  input  logic  [63:0]                                      csr_approx_l1_r_ber_i,  // from CSR Approximate Control register
+  input  logic  [63:0]                                      csr_approx_l2_r_ber_i,  // from CSR Approximate Control register
   output logic  [NumPorts-1:0]                              rd_ack_o,
   output logic                [DCACHE_SET_ASSOC-1:0]        rd_vld_bits_o,
   output logic                [DCACHE_SET_ASSOC-1:0]        rd_hit_oh_o,
@@ -58,6 +59,7 @@ module wt_dcache_mem #(
   input  logic                [DCACHE_OFFSET_WIDTH-1:0]     wr_cl_off_i,
   input  logic                [DCACHE_LINE_WIDTH-1:0]       wr_cl_data_i,
   input  logic                [DCACHE_LINE_WIDTH/8-1:0]     wr_cl_data_be_i,
+  input  logic                [DCACHE_LINE_WIDTH/64-1:0]    wr_cl_approx_i,
   input  logic                [DCACHE_SET_ASSOC-1:0]        wr_vld_bits_i,
 
   // separate port for single word write, no tag access
@@ -95,12 +97,35 @@ module wt_dcache_mem #(
 
   logic [DCACHE_WBUF_DEPTH-1:0]                                 wbuffer_hit_oh;
   logic [7:0]                                                   wbuffer_be;
-  logic [63:0]                                                  wbuffer_rdata, rdata;
+  logic [63:0]                                                  wbuffer_rdata, rdata_before_approx, rdata;
   logic [63:0]                                                  wbuffer_cmp_addr;
 
   logic                                                         cmp_en_d, cmp_en_q;
   logic                                                         rd_acked;
   logic [NumPorts-1:0]                                          bank_collision, rd_req_masked, rd_req_prio;
+  logic                                                         l1_read_error_en;
+  logic [63:0]                                                  mask_ber_l1r;
+  logic [63:0]                                                  mask_ber_l2r[2];
+
+///////////////////////////////////////////////////////
+// Masks
+///////////////////////////////////////////////////////
+
+  ber_mask i_ber_mask_1(
+    .clk_i          ( clk_i       ),
+    .rst_ni         ( rst_ni      ),
+    .en_i           ( wr_cl_approx_i[0] && (csr_approx_l2_r_ber_i != 64'h0) ),
+    .ber            ( csr_approx_l2_r_ber_i ),
+    .mask           ( mask_ber_l2r[0] )
+  );
+
+  ber_mask i_ber_mask_2(
+    .clk_i          ( clk_i       ),
+    .rst_ni         ( rst_ni      ),
+    .en_i           ( wr_cl_approx_i[1] && (csr_approx_l2_r_ber_i != 64'h0) ),
+    .ber            ( csr_approx_l2_r_ber_i ),
+    .mask           ( mask_ber_l2r[1] )
+  );
 
 ///////////////////////////////////////////////////////
 // arbiter
@@ -120,8 +145,8 @@ module wt_dcache_mem #(
                                (wr_req_i[j]   & wr_ack_o)     ? wr_data_be_i              :
                                                                 '0;
 
-      assign bank_wdata[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ?  
-                                  (approx_en && (csr_approx_ctrl_i[23:16] == 8'hff)) ? 64'hdeadbeefdeadbeef : wr_cl_data_i[k*64 +: 64] :  // Approximate L2 Reads
+      //(wr_cl_approx_i[k] && (csr_approx_l2_r_ber_i[23:16] == 8'hff)) ? 64'hdeadbeefdeadbeef : wr_cl_data_i[k*64 +: 64] :  // Approximate L2 Reads
+      assign bank_wdata[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ? wr_cl_data_i[k*64 +: 64] ^ mask_ber_l2r[k] :
                                   wr_data_i;                  // Approximate L1 writes alternate option
     end
   end
@@ -136,6 +161,7 @@ module wt_dcache_mem #(
   // Check if read errors are enabled
   assign approx_en  = approx_enable_i[1];
   // assign approx_en  = approx_enable_i[vld_sel_d];
+  assign l1_read_error_en = approx_en && (csr_approx_l1_r_ber_i != 64'h0);
 
 
   // priority masking
@@ -246,9 +272,18 @@ module wt_dcache_mem #(
       assign wr_cl_off     = wr_cl_off_i[DCACHE_OFFSET_WIDTH-1:3];
   end
 
-  assign rdata         = (approx_en && (csr_approx_ctrl_i[7:0] == 8'hff)) ? 64'hdeadbeefdeadbeef : // Approximate L1 Reads
-                         (wr_cl_vld_i) ? wr_cl_data_i[wr_cl_off*64 +: 64] : // l1 miss, data from l2
-                         rdata_cl[rd_hit_idx];                              // l1 hit
+  assign rdata_before_approx = (wr_cl_vld_i) ? wr_cl_data_i[wr_cl_off*64 +: 64] : // l1 miss, data from l2
+                                        rdata_cl[rd_hit_idx];                     // l1 hit
+
+  ber_mask i_ber_mask(
+    .clk_i          ( clk_i       ),
+    .rst_ni         ( rst_ni      ),
+    .en_i           ( l1_read_error_en ), 
+    .ber            ( csr_approx_l1_r_ber_i ),
+    .mask           ( mask_ber_l1r    )
+  );
+
+  assign rdata               = rdata_before_approx ^ mask_ber_l1r; // Approximate L1 Reads
 
   // overlay bytes that hit in the write buffer
   for(genvar k=0; k<8; k++) begin : gen_rd_data
@@ -364,7 +399,14 @@ module wt_dcache_mem #(
       //if(valid_i) begin
           // $display("[Yolo MemR] Tag : %12X, Index : %02X, Offset : %01X,", rd_tag_i[1], rd_idx_i[1], rd_off_i[1]);
           // $display("[Yolo MemR] approx_enable_in: %03B approx_en : %01B", approx_enable_i, approx_en);
-          $display("[Yolo MemR] rdata : %16X",rdata);
+          $display("[Yolo MemR] rdata : %16X , wr_cl_vld_i: %1B",rdata, wr_cl_vld_i);
+          $display("[Yolo MemR] rdata cacheline : %16X %16X %16X %16X", rdata_cl[0], rdata_cl[1], rdata_cl[2], rdata_cl[3]);
+          $display("[Yolo MemR] wr_cl_data_i : %16X %16X", wr_cl_data_i[0], wr_cl_data_i[1]);
+          $display("[Yolo MemR] Write Cacheline approx: %1B %1B",wr_cl_approx_i[0],wr_cl_approx_i[1]);
+          $display("[Yolo MemR] Write Cacheline Write Enable: %1B %1B %1B %1B",wr_cl_we_i[0],wr_cl_we_i[1],wr_cl_we_i[2],wr_cl_we_i[3]);
+          $display("[Yolo MemR] bank_wdata[0]: %16X %16X %16X %16X",bank_wdata[0][0],bank_wdata[0][1],bank_wdata[0][2],bank_wdata[0][3]);
+          $display("[Yolo MemR] bank_wdata[1]: %16X %16X %16X %16X",bank_wdata[1][0],bank_wdata[1][1],bank_wdata[1][2],bank_wdata[1][3]);
+          $display("[Yolo MemR] wr_data_i: %16X", wr_data_i);
           // $display("VLD_SEL : %3B",vld_sel_d);
       //end
     end   

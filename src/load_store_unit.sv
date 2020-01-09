@@ -59,7 +59,6 @@ module load_store_unit #(
     // CSR Registers
     input  logic [63:0]              csr_approx_a_i,           // From CSR register file
     input  logic [63:0]              csr_approx_b_i,           // From CSR register file
-    input  logic [63:0]              csr_approx_c_i,           // From CSR register file
 
     // Performance counters
     output logic                     itlb_miss_o,

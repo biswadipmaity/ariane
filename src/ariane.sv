@@ -165,7 +165,10 @@ module ariane #(
   logic                     dcache_en_csr_nbdcache;
   logic [63:0]              csr_approx_a;
   logic [63:0]              csr_approx_b;
-  logic [63:0]              csr_approx_c;
+  logic [63:0]              csr_approx_l1_r_ber;
+  logic [63:0]              csr_approx_l1_w_ber;
+  logic [63:0]              csr_approx_l2_r_ber;
+  logic [63:0]              csr_approx_l2_w_ber;
   logic                     csr_write_fflags_commit_cs;
   logic                     icache_en_csr;
   logic                     debug_mode;
@@ -363,7 +366,6 @@ module ariane #(
     .csr_commit_i           ( csr_commit_commit_ex        ), // from commit
     .csr_approx_a_i         ( csr_approx_a                ),
     .csr_approx_b_i         ( csr_approx_b                ),
-    .csr_approx_c_i         ( csr_approx_c                ),
     // MULT
     .mult_valid_i           ( mult_valid_id_ex            ),
     // LSU
@@ -503,7 +505,10 @@ module ariane #(
     .dcache_en_o            ( dcache_en_csr_nbdcache        ),
     .approx_a_o             ( csr_approx_a                  ),
     .approx_b_o             ( csr_approx_b                  ),
-    .approx_c_o             ( csr_approx_c                  ),
+    .approx_c_o             ( csr_approx_l1_r_ber           ),
+    .approx_d_o             ( csr_approx_l1_w_ber           ),
+    .approx_e_o             ( csr_approx_l2_r_ber           ),
+    .approx_f_o             ( csr_approx_l2_w_ber           ),
     .icache_en_o            ( icache_en_csr                 ),
     .perf_addr_o            ( addr_csr_perf                 ),
     .perf_data_o            ( data_csr_perf                 ),
@@ -597,7 +602,10 @@ module ariane #(
     .dcache_enable_i       ( dcache_en_csr_nbdcache      ),
     .dcache_flush_i        ( dcache_flush_ctrl_cache     ),
     .dcache_flush_ack_o    ( dcache_flush_ack_cache_ctrl ),
-    .csr_approx_ctrl_i     ( csr_approx_c                ),
+    .csr_approx_l1_r_ber_i ( csr_approx_l1_r_ber         ),
+    .csr_approx_l1_w_ber_i ( csr_approx_l1_w_ber         ),
+    .csr_approx_l2_r_ber_i ( csr_approx_l2_r_ber         ),
+    .csr_approx_l2_w_ber_i ( csr_approx_l2_w_ber         ),
     // to commit stage
     .dcache_amo_req_i      ( amo_req                     ),
     .dcache_amo_resp_o     ( amo_resp                    ),

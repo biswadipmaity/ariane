@@ -98,6 +98,7 @@ sources:
     - src/cache_subsystem/wt_dcache_mem.sv
     - src/cache_subsystem/std_cache_subsystem.sv
     - src/cache_subsystem/wt_dcache.sv
+    - src/cache_subsystem/ber_mask.sv
     - src/clint/axi_lite_interface.sv
     - src/clint/clint.sv
     - fpga/src/axi2apb/src/axi2apb_wrap.sv
@@ -184,6 +185,7 @@ sources:
     - src/common_cells/src/stream_delay.sv
     - src/common_cells/src/lfsr_8bit.sv
     - src/common_cells/src/lfsr_16bit.sv
+    - src/common_cells/src/lfsr.sv
     - src/common_cells/src/counter.sv
     - src/common_cells/src/shift_reg.sv
     - src/common_cells/src/exp_backoff.sv

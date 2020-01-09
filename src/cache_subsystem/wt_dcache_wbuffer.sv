@@ -62,7 +62,7 @@ module wt_dcache_wbuffer #(
    // core request ports
   input  dcache_req_i_t                      req_port_i,
   output dcache_req_o_t                      req_port_o,
-  input  logic [63:0]                        csr_approx_ctrl_i,
+  input  logic [63:0]                        csr_approx_l1_w_ber_i,
   // interface to miss handler
   input  logic                               miss_ack_i,
   output logic [63:0]                        miss_paddr_o,
@@ -131,6 +131,8 @@ module wt_dcache_wbuffer #(
   logic [DCACHE_CL_IDX_WIDTH-1:0] wr_cl_idx_q, wr_cl_idx_d;
 
   logic [63:0] debug_paddr [DCACHE_WBUF_DEPTH-1:0];
+  logic [63:0] data_before_error;
+  logic [63:0] mask_ber_l1w;
 
   wbuffer_t wbuffer_check_mux, wbuffer_dirty_mux;
 
@@ -151,6 +153,14 @@ module wt_dcache_wbuffer #(
     assign tx_vld_o[k]   = tx_stat_q[k].vld;
     assign tx_paddr_o[k] = wbuffer_q[tx_stat_q[k].ptr].wtag<<3;
   end
+
+  ber_mask i_ber_mask(
+    .clk_i          ( clk_i       ),
+    .rst_ni         ( rst_ni      ),
+    .en_i           ( req_port_i.approx && (csr_approx_l1_w_ber_i != 64'h0) ), // Approximate L1 Writes
+    .ber            ( csr_approx_l1_w_ber_i ),
+    .mask           ( mask_ber_l1w )
+  );
 
 ///////////////////////////////////////////////////////
 // openpiton does not understand byte enable sigs
@@ -472,10 +482,13 @@ module wt_dcache_wbuffer #(
           if (req_port_i.data_be[k]) begin
             wbuffer_d[wr_ptr].valid[k]       = 1'b1;
             wbuffer_d[wr_ptr].dirty[k]       = 1'b1;
-            wbuffer_d[wr_ptr].data[k*8 +: 8] = (req_port_i.approx && (csr_approx_ctrl_i[15:8] == 8'hff)) ? 8'hdb :      // Approximate L1 Writes
-                                                req_port_i.data_wdata[k*8 +: 8];
+            data_before_error[k*8 +: 8]      =  req_port_i.data_wdata[k*8 +: 8];
           end
         end
+
+        // Approximate L1 Writes
+        //wbuffer_d[wr_ptr].data = (req_port_i.approx && (csr_approx_l1_w_ber_i[15:8] == 8'hff)) ? 64'hdeadbeefdeadbeef : data_before_error;
+        wbuffer_d[wr_ptr].data = data_before_error ^ mask_ber_l1w;
       end
     end
   end

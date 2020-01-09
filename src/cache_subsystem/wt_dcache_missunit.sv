@@ -31,7 +31,7 @@ module wt_dcache_missunit #(
   // local cache management signals
   input  logic                                       wbuffer_empty_i,
   output logic                                       cache_en_o,  // local cache enable signal
-  input  logic [63:0]                                csr_approx_ctrl_i, // from CSR Approximation control register
+  input  logic [63:0]                                csr_approx_l2_w_ber_i, // from CSR Approximation control register
   // AMO interface
   input  amo_req_t                                   amo_req_i,
   output amo_resp_t                                  amo_resp_o,
@@ -63,6 +63,7 @@ module wt_dcache_missunit #(
   output logic [DCACHE_OFFSET_WIDTH-1:0]             wr_cl_off_o,
   output logic [DCACHE_LINE_WIDTH-1:0]               wr_cl_data_o,
   output logic [DCACHE_LINE_WIDTH/8-1:0]             wr_cl_data_be_o,
+  output logic [DCACHE_LINE_WIDTH/64-1:0]            wr_cl_approx_o,
   output logic [DCACHE_SET_ASSOC-1:0]                wr_vld_bits_o,
   // memory interface
   input  logic                                       mem_rtrn_vld_i,
@@ -112,6 +113,18 @@ module wt_dcache_missunit #(
   logic [NumPorts-1:0] mshr_rdrd_collision_d, mshr_rdrd_collision_q;
   logic [NumPorts-1:0] mshr_rdrd_collision;
   logic tx_rdwr_collision, mshr_rdwr_collision;
+  logic [63:0] mask_ber_l2w;
+
+  ///////////////////////////////////////////////////////
+  // Fault injection mask
+  ///////////////////////////////////////////////////////
+  ber_mask i_ber_mask(
+    .clk_i          ( clk_i       ),
+    .rst_ni         ( rst_ni      ),
+    .en_i           ( miss_approx_i[miss_port_idx] && (csr_approx_l2_w_ber_i != 64'h0) ),
+    .ber            ( csr_approx_l2_w_ber_i ),
+    .mask           ( mask_ber_l2w )
+  );
 
 ///////////////////////////////////////////////////////
 // input arbitration and general control sigs
@@ -174,7 +187,7 @@ module wt_dcache_missunit #(
   assign mshr_d.nc              = (mshr_allocate)  ? miss_nc_i      [miss_port_idx] : mshr_q.nc;
   assign mshr_d.repl_way        = (mshr_allocate)  ? repl_way                       : mshr_q.repl_way;
   assign mshr_d.miss_port_idx   = (mshr_allocate)  ? miss_port_idx                  : mshr_q.miss_port_idx;
-  assign mshr_d.approx          = (mshr_allocate)  ? miss_approx_i                  : mshr_q.approx;
+  assign mshr_d.approx          = (mshr_allocate)  ? miss_approx_i  [miss_port_idx] : mshr_q.approx;
 
   // currently we only have one outstanding read TX, hence an incoming load clears the MSHR
   assign mshr_vld_d = (mshr_allocate) ? 1'b1 :
@@ -228,9 +241,7 @@ module wt_dcache_missunit #(
   assign mem_data_o.tid    = (amo_sel) ? AmoTxId             : miss_id_i[miss_port_idx];
   assign mem_data_o.nc     = (amo_sel) ? 1'b1                : miss_nc_i[miss_port_idx];
   assign mem_data_o.way    = (amo_sel) ? '0                  : repl_way;
-  assign mem_data_o.data   = (amo_sel) ? amo_data            : 
-                             (miss_approx_i && (csr_approx_ctrl_i[31:24] == 8'hff)) ? 64'hbeefdeadbeefdead : // Approximate L2 writes
-                             miss_wdata_i[miss_port_idx];
+  assign mem_data_o.data   = (amo_sel) ? amo_data            : miss_wdata_i[miss_port_idx] ^ mask_ber_l2w;  // Approximate L2 writes
   assign mem_data_o.size   = (amo_sel) ? amo_req_i.size      : miss_size_i [miss_port_idx];
   assign mem_data_o.amo_op = (amo_sel) ? amo_req_i.amo_op    : AMO_NONE;
 
@@ -346,6 +357,7 @@ module wt_dcache_missunit #(
 
   assign wr_cl_tag_o     = mshr_q.paddr[DCACHE_TAG_WIDTH+DCACHE_INDEX_WIDTH-1:DCACHE_INDEX_WIDTH];
   assign wr_cl_off_o     = mshr_q.paddr[DCACHE_OFFSET_WIDTH-1:0];
+  assign wr_cl_approx_o  = mshr_q.approx;
   assign wr_cl_data_o    = mem_rtrn_i.data;
   assign wr_cl_data_be_o = (cl_write_en) ? '1 : '0;// we only write complete cachelines into the memory
 
@@ -561,6 +573,11 @@ end
     assert (NumPorts>=2)
       else $fatal(1,"[l1 dcache missunit] at least two ports are required (one read port, one write port)");
  end
+
+  // always @(posedge clk_i) begin
+  //     $display("[Yolo Miss Unit] Write Cacheline approx: %1B %1B",wr_cl_approx_i[0],wr_cl_approx_i[1]);
+  //   end   
+
 `endif
 //pragma translate_on
 

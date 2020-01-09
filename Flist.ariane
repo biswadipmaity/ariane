@@ -22,6 +22,7 @@ src/common_cells/src/deprecated/fifo_v1.sv
 src/common_cells/src/deprecated/fifo_v2.sv
 src/common_cells/src/fifo_v3.sv
 src/common_cells/src/lfsr_8bit.sv
+src/common_cells/src/lfsr.sv
 src/common_cells/src/lzc.sv
 src/common_cells/src/rr_arb_tree.sv
 src/common_cells/src/rstgen_bypass.sv
@@ -117,6 +118,7 @@ src/cache_subsystem/wt_dcache_mem.sv
 src/cache_subsystem/wt_dcache_missunit.sv
 src/cache_subsystem/wt_dcache_wbuffer.sv
 src/cache_subsystem/wt_dcache.sv
+src/cache_subsystem/ber_mask.sv
 src/cache_subsystem/wt_icache.sv
 src/cache_subsystem/wt_l15_adapter.sv
 src/cache_subsystem/wt_cache_subsystem.sv

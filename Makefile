@@ -165,6 +165,7 @@ src :=  $(filter-out src/ariane_regfile.sv, $(wildcard src/*.sv))              \
         src/common_cells/src/stream_delay.sv                                   \
         src/common_cells/src/lfsr_8bit.sv                                      \
         src/common_cells/src/lfsr_16bit.sv                                     \
+        src/common_cells/src/lfsr.sv                                           \
         src/common_cells/src/counter.sv                                        \
         src/common_cells/src/shift_reg.sv                                      \
         src/tech_cells_generic/src/pulp_clock_gating.sv                        \
