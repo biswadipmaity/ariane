@@ -75,7 +75,7 @@ module wt_dcache_ctrl #(
   assign address_idx_d = (req_port_o.data_gnt) ? req_port_i.address_index[DCACHE_INDEX_WIDTH-1:DCACHE_OFFSET_WIDTH] : address_idx_q;
   assign address_off_d = (req_port_o.data_gnt) ? req_port_i.address_index[DCACHE_OFFSET_WIDTH-1:0]                  : address_off_q;
   assign data_size_d   = (req_port_o.data_gnt) ? req_port_i.data_size                                               : data_size_q;
-  assign allow_approx_d= (req_port_o.data_gnt) ? req_port_i.approx                                                  : allow_approx_q;
+  assign allow_approx_d= (save_tag)            ? req_port_i.approx                                                  : allow_approx_q;
   assign rd_tag_o      = address_tag_d;
   assign rd_idx_o      = address_idx_d;
   assign rd_off_o      = address_off_d;
@@ -277,5 +277,10 @@ module wt_dcache_ctrl #(
   end
 `endif
 //pragma translate_on
+
+  always @(posedge clk_i) begin
+    $display("%t [Yolo CacheCtrl] req_port_i data_req: %01B, approx: %01B, tag: %12X, idx: %3X", $time, req_port_i.data_req, req_port_i.approx, req_port_i.address_tag, req_port_i.address_index);
+    $display("%t [Yolo CacheCtrl] Tag: %12X, Index: %2X, Offset: %1X, data_size_d: %02B, approx_o: %01B", $time, address_tag_d, address_idx_d, address_off_d, data_size_d, approx_o);
+  end
 
 endmodule // wt_dcache_ctrl

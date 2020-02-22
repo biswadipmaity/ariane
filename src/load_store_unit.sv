@@ -92,7 +92,6 @@ module load_store_unit #(
     logic [7:0]  be_i;
 
     assign vaddr_i = $unsigned($signed(fu_data_i.imm) + $signed(fu_data_i.operand_a));
-    assign should_approximate = ((vaddr_i != 64'h0) && (vaddr_i >= csr_approx_a_i) && (vaddr_i <= csr_approx_b_i));
 
     logic                     st_valid_i;
     logic                     ld_valid_i;
@@ -137,6 +136,9 @@ module load_store_unit #(
         .lsu_vaddr_i            ( mmu_vaddr              ),
         .lsu_valid_o            ( translation_valid      ),
         .lsu_paddr_o            ( mmu_paddr              ),
+        .should_approximate_o   ( should_approximate     ),
+        .csr_approx_a_i         ( csr_approx_a_i         ),
+        .csr_approx_b_i         ( csr_approx_b_i         ),
         .lsu_exception_o        ( mmu_exception          ),
         .lsu_dtlb_hit_o         ( dtlb_hit               ), // send in the same cycle as the request
         // connecting PTW to D$ IF
@@ -171,6 +173,7 @@ module load_store_unit #(
         .translation_req_o     ( st_translation_req   ),
         .vaddr_o               ( st_vaddr             ),
         .paddr_i               ( mmu_paddr            ),
+        .should_approximate_i  ( should_approximate   ),
         .ex_i                  ( mmu_exception        ),
         .dtlb_hit_i            ( dtlb_hit             ),
         // Load Unit
@@ -200,6 +203,7 @@ module load_store_unit #(
         .translation_req_o     ( ld_translation_req   ),
         .vaddr_o               ( ld_vaddr             ),
         .paddr_i               ( mmu_paddr            ),
+        .should_approximate_i  ( should_approximate   ),
         .ex_i                  ( mmu_exception        ),
         .dtlb_hit_i            ( dtlb_hit             ),
         // to store unit
@@ -364,7 +368,7 @@ module load_store_unit #(
     // new data arrives here
     lsu_ctrl_t lsu_req_i;
 
-    assign lsu_req_i = {lsu_valid_i, vaddr_i, fu_data_i.operand_b, be_i, fu_data_i.fu, fu_data_i.operator, fu_data_i.trans_id, should_approximate};
+    assign lsu_req_i = {lsu_valid_i, vaddr_i, fu_data_i.operand_b, be_i, fu_data_i.fu, fu_data_i.operator, fu_data_i.trans_id, ((vaddr_i != 64'h0) && (vaddr_i >= csr_approx_a_i) && (vaddr_i <= csr_approx_b_i))};
 
     lsu_bypass lsu_bypass_i (
         .lsu_req_i          ( lsu_req_i   ),

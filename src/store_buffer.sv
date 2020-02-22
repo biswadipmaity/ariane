@@ -279,8 +279,8 @@ module store_buffer (
     `endif
     //pragma translate_on
 
-    always @(posedge clk_i) begin
-      $display(1,"[Yolo Store Buffer] valid_i : %01B  addr_in_range_i   : %01B   Write_addr : %16X", valid_i, addr_in_range_i, commit_queue_q[commit_read_pointer_q].address);
-      $display(1,"[Yolo Store Buffer] req_port_o.approx : %01B    req_port_o.data_wdata : %16X", req_port_o.approx, req_port_o.data_wdata);
-    end   
+    // always @(posedge clk_i) begin
+    //   $display(1,"[Yolo Store Buffer] valid_i : %01B  addr_in_range_i   : %01B   Write_addr : %16X", valid_i, addr_in_range_i, commit_queue_q[commit_read_pointer_q].address);
+    //   $display(1,"[Yolo Store Buffer] req_port_o.approx : %01B    req_port_o.data_wdata : %16X", req_port_o.approx, req_port_o.data_wdata);
+    // end   
 endmodule

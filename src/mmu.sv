@@ -43,6 +43,12 @@ module mmu #(
         // Cycle 1
         output logic                            lsu_valid_o,      // translation is valid
         output logic [63:0]                     lsu_paddr_o,      // translated address
+            
+        // CSR Registers
+        input  logic [63:0]                     csr_approx_a_i,   // From CSR register file
+        input  logic [63:0]                     csr_approx_b_i,   // From CSR register file
+
+        output logic                            should_approximate_o,      // translated address
         output exception_t                      lsu_exception_o,  // address translation threw an exception
         // General control signals
         input riscv::priv_lvl_t                 priv_lvl_i,
@@ -245,6 +251,8 @@ module mmu #(
 
     // check for execute flag on memory
     assign match_any_execute_region = ariane_pkg::is_inside_execute_regions(ArianeCfg, icache_areq_o.fetch_paddr);
+    assign should_approximate_o = (lsu_paddr_o != 64'h0) && (lsu_paddr_o >= csr_approx_a_i) && (lsu_paddr_o <= csr_approx_b_i);
+    // assign should_approximate_o = 1'b0;
 
     //-----------------------
     // Data Interface
@@ -288,6 +296,7 @@ module mmu #(
             lsu_valid_o = 1'b0;
             // 4K page
             lsu_paddr_o = {dtlb_pte_q.ppn, lsu_vaddr_q[11:0]};
+
             // Mega page
             if (dtlb_is_2M_q) begin
               lsu_paddr_o[20:12] = lsu_vaddr_q[20:12];
@@ -358,4 +367,41 @@ module mmu #(
             dtlb_is_1G_q     <=  dtlb_is_1G_n;
         end
     end
+
+
+    //     .clk(clk_i), // input wire clk
+    //     .probe0({req_port_o.address_tag, req_port_o.address_index}),
+    //     .probe1(req_port_o.data_req), // input wire [63:0]  probe1
+    //     .probe2(req_port_i.data_gnt), // input wire [0:0]  probe2
+    //     .probe3(req_port_i.data_rdata), // input wire [0:0]  probe3
+    //     .probe4(req_port_i.data_rvalid), // input wire [0:0]  probe4
+    //     .probe5(ptw_error), // input wire [1:0]  probe5
+    //     .probe6(update_vaddr), // input wire [0:0]  probe6
+    //     .probe7(update_ptw_itlb.valid), // input wire [0:0]  probe7
+    //     .probe8(update_ptw_dtlb.valid), // input wire [0:0]  probe8
+    //     .probe9(dtlb_lu_access), // input wire [0:0]  probe9
+    //     .probe10(lsu_vaddr_i), // input wire [0:0]  probe10
+    //     .probe11(dtlb_lu_hit), // input wire [0:0]  probe11
+    //     .probe12(itlb_lu_access), // input wire [0:0]  probe12
+    //     .probe13(icache_areq_i.fetch_vaddr), // input wire [0:0]  probe13
+    //     .probe14(itlb_lu_hit) // input wire [0:0]  probe13
+
+    //pragma translate_off
+    `ifndef VERILATOR
+        
+    `endif
+    //pragma translate_on
+    always @(posedge clk_i) begin
+    if(lsu_valid_o) begin
+           $display("%0t [Yolo MMU] lsu_vaddr_i: %16X, lsu_paddr_o : %16X, should_approximate_o : %01B, en_ld_st_translation_i : %01B, lsu_valid_o: %01B",$time, lsu_vaddr_i, lsu_paddr_o, should_approximate_o, en_ld_st_translation_i, lsu_valid_o);
+    //     $display("[Yolo MMU] req_port_o.address_tag  : %16X", req_port_o.address_tag);
+    //     $display("[Yolo MMU] req_port_o.address_index: %16X", req_port_o.address_index);
+    //     $display("[Yolo MMU] req_port_o.data_req     : %16X", req_port_o.data_req);
+    //     $display("[Yolo MMU] req_port_o.data_gnt     : %01B", req_port_o.data_gnt);
+        
+    end
+    // if(valid_o) begin
+    //      $display(1,"[Yolo L1 Load out] Valid Output: %01B, DATA: %16X", valid_o, result_o);
+    // end
+    end   
 endmodule

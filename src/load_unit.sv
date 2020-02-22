@@ -32,6 +32,7 @@ module load_unit (
     output logic                     translation_req_o,   // request address translation
     output logic [63:0]              vaddr_o,             // virtual address out
     input  logic [63:0]              paddr_i,             // physical address in
+    input  logic                     should_approximate_i,
     input  exception_t               ex_i,                // exception which may has happened earlier. for example: mis-aligned exception
     input  logic                     dtlb_hit_i,          // hit on the dtlb, send in the same cycle as the request
     // address checker
@@ -75,7 +76,7 @@ module load_unit (
     
     // assign req_port_o.approx  = addr_in_range_i;
     // assign req_port_o.approx  = 1'b0;
-    assign req_port_o.approx  = lsu_ctrl_i.approx;
+    assign req_port_o.approx  = should_approximate_i;
 
     // directly output an exception
     assign ex_o = ex_i;
@@ -365,16 +366,15 @@ module load_unit (
         valid_o |->  (load_data_q.operator inside {ariane_pkg::LH, ariane_pkg::LHU}) |-> load_data_q.address_offset < 7) else $fatal (1,"invalid address offset used with {LH, LHU}");
     addr_offset2: assert property (@(posedge clk_i) disable iff (~rst_ni)
         valid_o |->  (load_data_q.operator inside {ariane_pkg::LB, ariane_pkg::LBU}) |-> load_data_q.address_offset < 8) else $fatal (1,"invalid address offset used with {LB, LBU}");
-
+`endif
     always @(posedge clk_i) begin
         if(valid_i) begin
-            $display(1,"[Yolo L1 Load in] Valid Input: %01B, Index : %03X, Tag : %12X ,VADDR: %16X, PADDR: %16X, APPROX_en : %01B, STATE: %1X", valid_i, req_port_o.address_index, req_port_o.address_tag,vaddr_o,paddr_i,req_port_o.approx, state_q);
+            $display("%t [Yolo L1 Load in] Valid Input: %01B, Index : %03X, Tag : %12X ,VADDR: %16X, PADDR: %16X, old_approx: %01B, should_approximate_i : %01B, STATE: %1X", $time, valid_i, req_port_o.address_index, req_port_o.address_tag,vaddr_o,paddr_i,lsu_ctrl_i.approx, should_approximate_i, state_q);
         end
-        if(valid_o) begin
-             $display(1,"[Yolo L1 Load out] Valid Output: %01B, DATA: %16X", valid_o, result_o);
-        end
+        // if(valid_o) begin
+        //      $display("[Yolo L1 Load out] Valid Output: %01B, DATA: %16X", valid_o, result_o);
+        // end
      end   
-`endif
 //pragma translate_on
 
 endmodule
